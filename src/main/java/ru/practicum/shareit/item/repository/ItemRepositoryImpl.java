@@ -8,21 +8,19 @@ import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
-public class ItemRepositoryImpl implements  ItemRepository {
+public class ItemRepositoryImpl implements ItemRepository {
     final HashMap<Long, Item> items;
 
     @Override
     public Item addNewItem(Item item) {
         item.setId(getId());
         items.put(item.getId(), item);
-        Item itemNew = items.get(item.getId());
-        return itemNew;
+        return item;
     }
 
     @Override
     public Item updateItem(long itemId, Item updItem) {
         Item oldItem = items.get(itemId);
-
         if (updItem.getDescription() != null && !updItem.getDescription().equals(oldItem.getDescription())) {
             oldItem.setDescription(updItem.getDescription());
         }
@@ -32,8 +30,7 @@ public class ItemRepositoryImpl implements  ItemRepository {
         if (updItem.getAvailable() != null) {
             oldItem.setAvailable(updItem.getAvailable());
         }
-        items.put(itemId, oldItem);
-        return items.get(itemId);
+        return oldItem;
     }
 
     @Override
@@ -59,16 +56,15 @@ public class ItemRepositoryImpl implements  ItemRepository {
 
     @Override
     public Collection<Item> findBySearch(String text) {
-        String textToLower = text.toLowerCase();
-        Collection<Item> listItem = new ArrayList<>();
-        if (!text.isBlank()) {
-            listItem = items.values().stream()
-                    .filter(item -> item.getAvailable() == true)
-                    .filter(item -> item.getName().toLowerCase().contains(textToLower)
-                            || item.getDescription().toLowerCase().contains(textToLower))
-                    .toList();
+        if (text == null || text.isBlank()) { // Check for null, blank, or whitespace-only strings
+            return Collections.emptyList(); // Return an empty list if text is not valid
         }
-        return listItem;
+        String textToLower = text.toLowerCase();
+        return items.values().stream()
+                .filter(Item::getAvailable) // No need to compare to `true`
+                .filter(item -> item.getName().toLowerCase().contains(textToLower)
+                        || item.getDescription().toLowerCase().contains(textToLower))
+                .toList();
     }
 
     private long getId() {

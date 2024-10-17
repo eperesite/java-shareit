@@ -18,8 +18,8 @@ public class UserRepositoryImpl implements UserRepository {
     public User create(User user) {
         user.setId(getId());
         users.put(user.getId(), user);
-        emails.put(user.getEmail(),user);
-        return users.get(user.getId());
+        emails.put(user.getEmail(), user);
+        return user;
     }
 
     @Override

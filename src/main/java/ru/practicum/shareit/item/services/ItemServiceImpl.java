@@ -9,10 +9,11 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
-public class ItemServiceImpl implements  ItemService {
+public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
@@ -20,7 +21,7 @@ public class ItemServiceImpl implements  ItemService {
     public ItemDto addNewItem(ItemDto newItemDto, long ownerId) {
         userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("Пользователь " + ownerId + "не найден"));
-        return ItemMapper.toItemDto(itemRepository.addNewItem(ItemMapper.toItem(newItemDto,ownerId)));
+        return ItemMapper.toItemDto(itemRepository.addNewItem(ItemMapper.toItem(newItemDto, ownerId)));
     }
 
     @Override
@@ -29,7 +30,7 @@ public class ItemServiceImpl implements  ItemService {
                 .orElseThrow(() -> new NotFoundException("Пользователь " + ownerId + "не найден"));
         itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Item " + itemId + "не найден"));
-        return ItemMapper.toItemDto(itemRepository.updateItem(itemId, ItemMapper.toItem(itemUpd,ownerId)));
+        return ItemMapper.toItemDto(itemRepository.updateItem(itemId, ItemMapper.toItem(itemUpd, ownerId)));
     }
 
     @Override
@@ -39,9 +40,9 @@ public class ItemServiceImpl implements  ItemService {
 
     @Override
     public ItemDto findById(long itemId) {
-        itemRepository.findById(itemId)
+        var item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Item " + itemId + "не найден"));
-        return ItemMapper.toItemDto(itemRepository.findById(itemId).get());
+        return ItemMapper.toItemDto(item); // Return item after the first retrieval
     }
 
     @Override
@@ -56,7 +57,9 @@ public class ItemServiceImpl implements  ItemService {
 
     @Override
     public Collection<ItemDto> findBySearch(String text) {
-
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
         return itemRepository.findBySearch(text)
                 .stream()
                 .map(ItemMapper::toItemDto)
