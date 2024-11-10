@@ -2,16 +2,19 @@ package ru.practicum.shareit.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDto {
-    private Long id;
+    Long id;
     @NotBlank
-    private String name;
+    String name;
     @Email(message = "Email имеет некорректный формат")
     @NotBlank
-    private String email;
+    String email;
 }
