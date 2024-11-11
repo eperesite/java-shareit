@@ -11,7 +11,7 @@ import java.util.List;
 public interface BookingService {
     OutputBookingDto create(BookingDto bookingDto, long id);
 
-    OutputBookingDto approve(BookingApproveDto bookingApproveDto, long id);
+    OutputBookingDto approve(long bookingId, boolean approved, long ownerId);
 
     void delete(long id);
 

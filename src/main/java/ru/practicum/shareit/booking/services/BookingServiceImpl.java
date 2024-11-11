@@ -17,7 +17,9 @@ import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.services.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private static final Sort NEWEST_FIRST = Sort.by(Sort.Direction.DESC, "start");
 
     @Override
@@ -41,7 +44,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public OutputBookingDto create(BookingDto bookingDto, long bookerId) {
-        User booker = getUser(bookerId);
+        User booker = UserMapper.toUser(userService.findById(bookerId));
+        bookingDto.setBooker(booker.getId());
         Item item = getItem(bookingDto.getItemId());
 
         if (!item.getAvailable()) {
@@ -52,6 +56,9 @@ public class BookingServiceImpl implements BookingService {
         }
         if (item.getOwner().getId().equals(bookerId)) {
             throw new ValidationException("Владелец не может создать booking");
+        }
+        if (bookingDto.getEnd().isBefore(bookingDto.getStart())) {
+            throw new ValidationException("Дата окончания бронирования не может быть раньше даты начала");
         }
         bookingDto.setBooker(booker.getId());
 
@@ -67,24 +74,21 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public OutputBookingDto approve(BookingApproveDto bookingApproveDto, long id) {
-        Booking booking = getBooking(bookingApproveDto.getId());
+    public OutputBookingDto approve(long bookingId, boolean approved, long ownerId) {
+        Booking booking = getBooking(bookingId);
         Item item = booking.getItem();
 
-        if (!item.getOwner().getId().equals(id)) {
+        if (!item.getOwner().getId().equals(ownerId)) {
             throw new ValidationException("Подтвердить Booking может только владелец");
         }
         if (booking.getStatus().equals(BookingStatus.WAITING)) {
-            if (bookingApproveDto.getApproved()) {
-                booking.setStatus(BookingStatus.APPROVED);
-            } else {
-                booking.setStatus(BookingStatus.REJECTED);
-            }
+            booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         } else {
-            throw new ValidationException("Booking в статусе {}" + booking.getStatus());
+            throw new ValidationException("Booking в статусе " + booking.getStatus());
         }
         return BookingMapper.toOutputBookingDto(bookingRepository.save(booking));
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -103,12 +107,13 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public List<OutputBookingDto> findByBookerId(long bookerId, String status) {
-        List<Booking> listBooking = new ArrayList<>();
         User booker = getUser(bookerId);
-        if (BookingStatus.from(status) == null) {
-            throw new ValidatetionConflict("Некорректный статус Booking");
-        }
         BookingStatus bookingStatus = BookingStatus.from(status);
+        if (bookingStatus == null) {
+            throw new ValidatetionConflict("Некорректный статус Booking: " + status);
+        }
+
+        List<Booking> listBooking;
         switch (bookingStatus) {
             case ALL:
                 listBooking = bookingRepository.findByBooker(booker, NEWEST_FIRST);
@@ -127,12 +132,15 @@ public class BookingServiceImpl implements BookingService {
             case APPROVED:
                 listBooking = bookingRepository.findByBookerAndStatusEquals(booker, status, NEWEST_FIRST);
                 break;
-
+            default:
+                throw new ValidatetionConflict("Некорректный статус Booking: " + status);
         }
+
         return listBooking.stream()
                 .map(BookingMapper::toOutputBookingDto)
                 .toList();
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -140,7 +148,7 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> listBooking = new ArrayList<>();
         User owner = getUser(ownerId);
         if (BookingStatus.from(status) == null) {
-            throw new ValidatetionConflict("Некорректный статус Booking");
+            throw new ValidatetionConflict("Некорректный статус Booking" + status);
         }
         BookingStatus bookingStatus = BookingStatus.from(status);
         switch (bookingStatus) {

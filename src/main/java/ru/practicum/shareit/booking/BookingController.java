@@ -30,16 +30,13 @@ import static ru.practicum.shareit.constans.Constants.USER_PARAM_HEADER;
 @RequestMapping(path = "/bookings")
 public class BookingController {
     private final BookingService bookingService;
-    private final UserService userService;
 
     @PostMapping
     public OutputBookingDto create(@RequestHeader(USER_PARAM_HEADER) long userId,
                                    @RequestBody @Valid BookingDto bookingDto) {
-        log.info("==>Создание Booking: ", bookingDto);
-        User booker = UserMapper.toUser(userService.findById(userId));
-        bookingDto.setBooker(booker.getId());
+        log.info("==> Создание Booking: {}", bookingDto);
         OutputBookingDto bookingDtoNew = bookingService.create(bookingDto, userId);
-        log.info("<==Создан Booking ");
+        log.info("<== Создан Booking");
         return bookingDtoNew;
     }
 
@@ -47,15 +44,12 @@ public class BookingController {
     public OutputBookingDto approve(@PathVariable(name = "bookingId") long bookingId,
                                     @RequestParam(value = "approved") boolean approved,
                                     @RequestHeader(USER_PARAM_HEADER) long ownerId) {
-        log.info("==> Подтверждение  Booking: владельцем :userId", bookingId, ownerId);
-        BookingApproveDto bookingApproveDto = BookingApproveDto.builder()
-                .id(bookingId)
-                .approved(approved)
-                .build();
-        OutputBookingDto bookingDto = bookingService.approve(bookingApproveDto, ownerId);
-        log.info("<== Booking: потвержден/отклонен", bookingId);
+        log.info("==> Подтверждение Booking владельцем: {}", ownerId);
+        OutputBookingDto bookingDto = bookingService.approve(bookingId, approved, ownerId);
+        log.info("<== Booking подтвержден/отклонен: {}", bookingId);
         return bookingDto;
     }
+
 
     @GetMapping("/{bookingId}")
     public OutputBookingDto getBooking(@PathVariable(name = "bookingId") long bookingId,
@@ -70,7 +64,6 @@ public class BookingController {
     public List<OutputBookingDto> getBookings(@RequestParam(value = "state", defaultValue = "ALL") String status,
                                               @RequestHeader(USER_PARAM_HEADER) long bookerId) {
         log.info("==> Получение бронирований пользователя :bookingId", bookerId);
-        BookingStatus bookingStatus = BookingStatus.from(status);
         List<OutputBookingDto> listBookingDto = bookingService.findByBookerId(bookerId, status);
         log.info("<== Получены бронирования пользователя :bookingId", bookerId);
         return listBookingDto;
