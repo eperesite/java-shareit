@@ -12,13 +12,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.shareit.booking.dto.BookingApproveDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.OutputBookingDto;
 import ru.practicum.shareit.booking.services.BookingService;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.mapper.UserMapper;
-import ru.practicum.shareit.user.services.UserService;
 
 import java.util.List;
 
