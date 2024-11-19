@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,10 +14,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentInfoDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.services.ItemService;
 
 import java.util.Collection;
+
+import static ru.practicum.shareit.constans.Constants.USER_PARAM_HEADER;
 
 @Slf4j
 @RestController
@@ -24,45 +29,58 @@ import java.util.Collection;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService service;
-    static final String userParamHeader = "X-Sharer-User-Id";
 
     @GetMapping("/{id}")
-    public ItemDto get(@PathVariable long id) {
-        log.info("Getting Item by id: {}", id);
-        return service.findById(id);
+    public ItemDto get(@RequestHeader(USER_PARAM_HEADER) long userId, @PathVariable long id) {
+        log.info("==>Получение Item по id: {}", id);
+        ItemDto itemDto = service.findById(id, userId);
+        return itemDto;
     }
 
     @GetMapping
-    public Collection<ItemDto> getByOwnerId(@RequestHeader(userParamHeader) long userId) {
-        log.info("Getting Items by Owner: {}", userId);
-        return service.findByOwner(userId);
+    public Collection<ItemDto> getByOwnerId(@RequestHeader(USER_PARAM_HEADER) long userId) {
+        log.info("==>Получение Item по Владельцу: {}", userId);
+        Collection<ItemDto> itemsByOwner = service.findByOwner(userId);
+        return itemsByOwner;
     }
 
     @GetMapping("/search")
     public Collection<ItemDto> getItemBySearch(@RequestParam String text) {
-        log.info("Searching Items with: {}", text);
-        return service.findBySearch(text);
+        log.info("==>Получение Item по поиску со словом : {}", text);
+        Collection<ItemDto> itemsBySearch = service.findBySearch(text);
+        return itemsBySearch;
     }
 
     @PostMapping
-    public ItemDto create(@RequestHeader(userParamHeader) long userId,
+    public ItemDto create(@RequestHeader(USER_PARAM_HEADER) long userId,
                           @RequestBody @Valid ItemDto itemDto) {
-        log.info("Creating Item: {} with owner {}", itemDto, userId);
-        return service.addNewItem(itemDto, userId);
+        log.info("==>Создание Item: {} с владельцем {}", itemDto, userId);
+        ItemDto newItemDto = service.create(itemDto, userId);
+        return newItemDto;
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto update(@RequestHeader(userParamHeader) long userId,
+    public ItemDto update(@RequestHeader(USER_PARAM_HEADER) long userId,
                           @PathVariable long itemId,
                           @RequestBody ItemDto itemDto) {
-        log.info("Updating Item: {} with owner {}", itemDto, userId);
-        return service.updateItem(itemId, itemDto, userId);
+        log.info("==>Обновление Item: {} владельца {}", itemDto, userId);
+        itemDto.setId(itemId);
+        ItemDto updItemDto = service.update(itemDto, userId);
+        return updItemDto;
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable long id) {
-        log.info("Deleting Item with id: {}", id);
+        log.info("==>Удаление Item по: {}", id);
         service.delete(id);
     }
 
+    @PostMapping("/{itemId}/comment")
+    public CommentDto createComment(@NotNull @RequestHeader(USER_PARAM_HEADER) long userId,
+                                    @PathVariable long itemId,
+                                    @RequestBody @Valid CommentInfoDto commentInfoDto) {
+        log.info("==>Создание коментария к Item по: {}", itemId);
+        CommentDto commentDto = service.createComment(itemId, userId, commentInfoDto);
+        return commentDto;
+    }
 }

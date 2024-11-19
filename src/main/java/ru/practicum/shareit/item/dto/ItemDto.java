@@ -3,19 +3,31 @@ package ru.practicum.shareit.item.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jdk.jfr.BooleanFlag;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.request.ItemRequest;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemDto {
-    private  Long id;
+    Long id;
     @NotBlank
-    private  String name;
+    String name;
     @NotBlank
-    private  String description;
+    String description;
     @BooleanFlag
     @NotNull
-    private  Boolean available;
-    private  Long request;
+    Boolean available;
+    ItemRequest request;
+    BookingDto lastBooking;
+    BookingDto nextBooking;
+    List<CommentDto> comments;
 }
