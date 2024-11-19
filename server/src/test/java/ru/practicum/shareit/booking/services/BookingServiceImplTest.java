@@ -70,6 +70,17 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void createBookingTest() {
+        BookingDto bookingDto = BookingDto.builder()
+                .start(LocalDateTime.now())
+                .end(LocalDateTime.now().plusDays(1)) // Укажите дату окончания
+                .itemId(3L)
+                .build();
+        OutputBookingDto outputBookingDto = service.create(bookingDto, 1L);
+        assertEquals(outputBookingDto.getId(), 5L);
+    }
+
+    @Test
     void createBookingIfItemNotAvailableTest() {
         BookingDto bookingDto = BookingDto.builder()
                 .start(LocalDateTime.now())
