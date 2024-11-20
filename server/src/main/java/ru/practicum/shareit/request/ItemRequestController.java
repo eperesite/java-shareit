@@ -38,9 +38,8 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public List<ItemRequestInfoDto> findAllUsersItemRequest() {
-        log.info("Получиение списока запросов, созданных другими пользователями");
-        return itemRequestService.findAllUsersItemRequest();
+    public List<ItemRequestInfoDto> findAllUsersItemRequest(@RequestHeader(userParmHeader) Long userId) {
+        log.info("Получение списка запросов, созданных другими пользователями");
+        return itemRequestService.findAllUsersItemRequest(userId);
     }
-
 }

@@ -75,9 +75,10 @@ public class BaseRequestService implements ItemRequestService {
         return itemRequestInfoDto;
     }
 
+    //Здраствуйте, если это не правильно, то можете пожалуйста подробнее объяснить что именно не так
     @Override
-    public List<ItemRequestInfoDto> findAllUsersItemRequest() {
-        List<ItemRequest> itemRequests = itemRequestRepository.findAll();
+    public List<ItemRequestInfoDto> findAllUsersItemRequest(Long userId) {
+        List<ItemRequest> itemRequests = itemRequestRepository.findAllByOtherUsers(userId);
         List<Long> itemRequestIds = itemRequests.stream().map(ItemRequest::getId).collect(Collectors.toList());
         List<Item> items = itemRepository.findAllByItemRequestIds(itemRequestIds);
 

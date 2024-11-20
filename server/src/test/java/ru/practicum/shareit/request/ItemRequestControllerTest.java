@@ -18,11 +18,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -43,7 +41,7 @@ class ItemRequestControllerTest {
     @MockBean
     private ItemRequestService requestService;
 
-    public ItemRequestInfoDto getItemRequestInfpDto() {
+    public ItemRequestInfoDto getItemRequestInfoDto() {
         return ItemRequestInfoDto.builder()
                 .id(1L)
                 .description("TestItemRequestDescription")
@@ -55,7 +53,6 @@ class ItemRequestControllerTest {
 
     public ItemRequestDto getItemRequestDto() {
         return ItemRequestDto.builder()
-                .id(1L)
                 .description("TestItemRequestDescription")
                 .created(LocalDateTime.now())
                 .build();
@@ -64,71 +61,59 @@ class ItemRequestControllerTest {
     @Test
     void create() throws Exception {
         ItemRequestDto itemRequestDto = getItemRequestDto();
-        ItemRequestInfoDto itemRequestRequestDto = getItemRequestInfpDto();
+        ItemRequestInfoDto itemRequestInfoDto = getItemRequestInfoDto();
 
-        Mockito.when(requestService.create(any()))
-                .thenReturn(itemRequestRequestDto);
+        when(requestService.create(any())).thenReturn(itemRequestInfoDto);
+
         mvc.perform(post("/requests")
-                        .header("X-Sharer-User-Id", 0L)
+                        .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(itemRequestDto)))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andReturn();
 
-        verify(requestService).create(itemRequestDto);
+        verify(requestService).create(any(ItemRequestDto.class));
     }
 
     @Test
     void findAllByUserIdTest() throws Exception {
-        ItemRequestDto itemRequestDto = getItemRequestDto();
-        ItemRequestInfoDto itemRequestRequestDto = getItemRequestInfpDto();
-        Mockito.when(requestService.findAllByUserId(anyLong()))
-                .thenReturn(List.of(itemRequestRequestDto));
+        ItemRequestInfoDto itemRequestInfoDto = getItemRequestInfoDto();
 
-        mvc.perform(get("/requests/{requestId}", 1L)
+        when(requestService.findAllByUserId(anyLong())).thenReturn(List.of(itemRequestInfoDto));
+
+        mvc.perform(get("/requests")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(content().json(mapper.writeValueAsString(List.of(itemRequestInfoDto))));
     }
-
 
     @Test
     void findItemRequestByIdTest() throws Exception {
-        ItemRequestDto itemRequestDto = getItemRequestDto();
-        ItemRequestInfoDto itemRequestRequestDto = getItemRequestInfpDto();
-        Mockito.when(requestService.findItemRequestById(anyLong(), (anyLong())))
-                .thenReturn(itemRequestRequestDto);
+        ItemRequestInfoDto itemRequestInfoDto = getItemRequestInfoDto();
 
-        mvc.perform(get("/requests/all")
+        when(requestService.findItemRequestById(anyLong(), anyLong())).thenReturn(itemRequestInfoDto);
+
+        mvc.perform(get("/requests/1")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(content().json(mapper.writeValueAsString(itemRequestInfoDto)));
     }
 
     @Test
     void findAllUsersItemRequestTest() throws Exception {
-        ItemRequestDto itemRequestDto = getItemRequestDto();
-        ItemRequestInfoDto itemRequestRequestDto = getItemRequestInfpDto();
-        Mockito.when(requestService.findAllUsersItemRequest())
-                .thenReturn(List.of(itemRequestRequestDto));
+        ItemRequestInfoDto itemRequestInfoDto = getItemRequestInfoDto();
+
+        when(requestService.findAllUsersItemRequest(anyLong())).thenReturn(List.of(itemRequestInfoDto));
 
         mvc.perform(get("/requests/all")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(content().json(mapper.writeValueAsString(List.of(itemRequestInfoDto))));
     }
 
     @Test
     void findAll() throws Exception {
-        Mockito.when(requestService.findAllByUserId(anyLong())).thenReturn(Collections.emptyList());
+        when(requestService.findAllByUserId(anyLong())).thenReturn(Collections.emptyList());
 
         mvc.perform(get("/requests")
                         .header("X-Sharer-User-Id", 1L)
