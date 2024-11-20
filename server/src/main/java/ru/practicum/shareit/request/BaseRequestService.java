@@ -15,7 +15,10 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -27,7 +30,20 @@ public class BaseRequestService implements ItemRequestService {
 
     @Override
     public List<ItemRequestInfoDto> findAllByUserId(Long userId) {
-        return RequestMapper.toItemRequestDtoList(itemRequestRepository.findAllByRequestorId(userId));
+        List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequestorId(userId);
+        List<Long> itemRequestIds = itemRequests.stream().map(ItemRequest::getId).collect(Collectors.toList());
+        List<Item> items = itemRepository.findAllByItemRequestIds(itemRequestIds);
+
+        Map<Long, List<Item>> itemsByRequestId = items.stream()
+                .collect(Collectors.groupingBy(item -> item.getItemRequest().getId()));
+
+        return itemRequests.stream()
+                .map(itemRequest -> {
+                    ItemRequestInfoDto itemRequestInfoDto = RequestMapper.toItemRequestDto(itemRequest);
+                    itemRequestInfoDto.setItems(ItemMapper.toItemsDtoForRequest(itemsByRequestId.getOrDefault(itemRequest.getId(), Collections.emptyList())));
+                    return itemRequestInfoDto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -61,8 +77,19 @@ public class BaseRequestService implements ItemRequestService {
 
     @Override
     public List<ItemRequestInfoDto> findAllUsersItemRequest() {
-        return itemRequestRepository.findAll().stream()
-                .map(RequestMapper::toItemRequestDto)
-                .toList();
+        List<ItemRequest> itemRequests = itemRequestRepository.findAll();
+        List<Long> itemRequestIds = itemRequests.stream().map(ItemRequest::getId).collect(Collectors.toList());
+        List<Item> items = itemRepository.findAllByItemRequestIds(itemRequestIds);
+
+        Map<Long, List<Item>> itemsByRequestId = items.stream()
+                .collect(Collectors.groupingBy(item -> item.getItemRequest().getId()));
+
+        return itemRequests.stream()
+                .map(itemRequest -> {
+                    ItemRequestInfoDto itemRequestInfoDto = RequestMapper.toItemRequestDto(itemRequest);
+                    itemRequestInfoDto.setItems(ItemMapper.toItemsDtoForRequest(itemsByRequestId.getOrDefault(itemRequest.getId(), Collections.emptyList())));
+                    return itemRequestInfoDto;
+                })
+                .collect(Collectors.toList());
     }
 }
